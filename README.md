@@ -30,8 +30,20 @@ docker compose up -d
 
 ### 애플리케이션 실행
 
+`.env` 값을 현재 셸에 반영한 뒤 애플리케이션을 실행합니다.
+
 ```bash
+set -a
+source .env
+set +a
 ./gradlew bootRun
+```
+
+로컬의 3306 포트를 이미 사용 중이라면 `.env`의 `DB_PORT`를 `3307`로 변경하거나 다음처럼 실행할 수 있습니다.
+
+```bash
+DB_PORT=3307 docker compose up -d
+DB_PORT=3307 ./gradlew bootRun
 ```
 
 - Health check: `http://localhost:8080/actuator/health`
