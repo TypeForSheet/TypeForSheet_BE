@@ -19,14 +19,20 @@ jobs:
             const issue = context.payload.issue;
             const ticketPrefix = `[TFS-${issue.number}]`;
 
-            if (/^\[TFS-\d+\]\s/.test(issue.title)) {
+            const existingPrefix = issue.title.match(/^\[TFS-(\d+)\]\s*/);
+
+            if (existingPrefix?.[1] === String(issue.number)) {
               core.info(`Issue title already has a ticket prefix: ${issue.title}`);
               return;
             }
+
+            const titleWithoutPrefix = issue.title
+              .replace(/^\[TFS-\d+\]\s*/, "")
+              .trim();
 
             await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              title: `${ticketPrefix} ${issue.title.trim()}`,
+              title: `${ticketPrefix} ${titleWithoutPrefix}`,
             });
