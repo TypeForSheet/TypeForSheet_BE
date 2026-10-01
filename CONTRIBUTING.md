@@ -2,7 +2,7 @@
 
 ## 작업 순서
 
-1. GitHub Issue를 생성하고 번호를 확인합니다.
+1. GitHub Issue를 생성하고 번호를 확인합니다. 생성된 Issue 제목에는 `[TFS-{번호}]`가 자동으로 붙습니다.
 2. 최신 `dev`에서 작업 브랜치를 생성합니다.
 3. 구현과 테스트를 완료한 뒤 원격 브랜치로 Push합니다.
 4. `dev`를 대상으로 Pull Request를 생성합니다.
@@ -32,6 +32,22 @@
 feat/TFS-12
 fix/TFS-18
 chore/TFS-1
+```
+
+## Issue
+
+Issue 제목은 다음 형식을 사용합니다.
+
+```text
+[TFS-이슈번호] [TYPE] 작업 요약
+```
+
+Issue 양식에서 TYPE을 선택하여 작성하면 GitHub Actions가 발급된 Issue 번호를 제목 앞에 자동으로 추가합니다.
+
+예시:
+
+```text
+[TFS-3] [FEAT] 시트 생성 API 구현
 ```
 
 ## Pull Request
