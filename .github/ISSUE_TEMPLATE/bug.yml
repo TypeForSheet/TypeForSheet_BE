@@ -1,7 +1,7 @@
 name: Bug
 description: 버그나 오류를 제보하고 수정합니다.
 title: "[FIX] "
-labels: ["FIX"]
+labels: ["🔧 Fix"]
 body:
   - type: textarea
     id: problem

@@ -1,7 +1,7 @@
 name: Feature
 description: 새로운 기능을 제안하거나 구현합니다.
 title: "[FEAT] "
-labels: ["FEAT"]
+labels: ["💻 Feat"]
 body:
   - type: textarea
     id: description
