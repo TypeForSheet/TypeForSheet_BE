@@ -1,0 +1,9 @@
+# Replace this user with the backend lead team when the team is created.
+* @meeeji
+
+# Repository and delivery configuration always requires the backend lead's review.
+/.github/ @meeeji
+/build.gradle @meeeji
+/settings.gradle @meeeji
+/Dockerfile @meeeji
+/docker-compose.yml @meeeji

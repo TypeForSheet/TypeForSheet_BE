@@ -1,0 +1,1 @@
+-- Initial schema marker. Add tables through subsequent Flyway migrations.
