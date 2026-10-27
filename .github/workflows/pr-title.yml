@@ -1,0 +1,73 @@
+
+name: Add TFS PR prefix
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  add-prefix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add TFS number to PR title
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+
+            const issueMatch =
+              body.match(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/i) ||
+              body.match(/Issue:\s*(?:Closes\s*)?#(\d+)/i) ||
+              body.match(/Issue:\s*#(\d+)/i);
+
+            if (!issueMatch) {
+              core.info('Linked issue number not found.');
+              return;
+            }
+
+            const issueNumber = Number(issueMatch[1]);
+
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+
+            if (issue.pull_request) {
+              core.warning('Linked number refers to a PR, not an issue.');
+              return;
+            }
+
+            const tfsMatch = issue.title.match(/^\[(TFS-\d+)\]/);
+
+            if (!tfsMatch) {
+              core.info('TFS number not found in issue title.');
+              return;
+            }
+
+            const prefix = `[${tfsMatch[1]}]`;
+
+            const cleanTitle = pr.title
+              .replace(/^\[TFS-\d+\]\s*/, '')
+              .trim();
+
+            const newTitle = `${prefix} ${cleanTitle}`;
+
+            if (pr.title === newTitle) {
+              core.info('PR title already has the correct prefix.');
+              return;
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              title: newTitle,
+            });
