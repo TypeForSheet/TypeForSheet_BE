@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -80,6 +81,12 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse<Void>> handleException(Exception exception) {
+
+    if (exception instanceof ErrorResponse errorResponse) {
+
+      return ResponseEntity.status(errorResponse.getStatusCode())
+          .body(new ApiResponse<>(false, "HTTP_ERROR", "요청을 처리할 수 없습니다.", null));
+    }
 
     log.error("Unhandled server exception", exception);
 

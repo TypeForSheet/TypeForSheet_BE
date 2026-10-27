@@ -2,9 +2,11 @@ package com.typeforsheet.backend.domain.auth.oauth;
 
 import com.typeforsheet.backend.global.exception.BusinessException;
 import com.typeforsheet.backend.global.exception.ErrorCode;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -20,7 +22,13 @@ public class KakaoTokenVerifier {
   public KakaoTokenVerifier(@Value("${app.oauth.kakao.app-id:}") String kakaoAppId) {
 
     this.kakaoAppId = kakaoAppId;
-    this.restClient = RestClient.create();
+
+    SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+
+    requestFactory.setConnectTimeout(Duration.ofSeconds(3));
+    requestFactory.setReadTimeout(Duration.ofSeconds(5));
+
+    this.restClient = RestClient.builder().requestFactory(requestFactory).build();
   }
 
   public String verifyAndGetUserId(String accessToken) {

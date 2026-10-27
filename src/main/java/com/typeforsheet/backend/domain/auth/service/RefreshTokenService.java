@@ -3,6 +3,8 @@ package com.typeforsheet.backend.domain.auth.service;
 import com.typeforsheet.backend.domain.auth.entity.RefreshToken;
 import com.typeforsheet.backend.domain.auth.repository.RefreshTokenRepository;
 import com.typeforsheet.backend.domain.user.entity.User;
+import com.typeforsheet.backend.global.exception.BusinessException;
+import com.typeforsheet.backend.global.exception.ErrorCode;
 import com.typeforsheet.backend.global.security.JwtTokenProvider;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -54,10 +56,10 @@ public class RefreshTokenService {
     RefreshToken storedToken =
         refreshTokenRepository
             .findByTokenHashForUpdate(tokenHash)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
 
     if (storedToken.isExpired(nowUtc())) {
-      throw new IllegalArgumentException("Expired refresh token.");
+      throw new BusinessException(ErrorCode.EXPIRED_REFRESH_TOKEN);
     }
 
     User user = storedToken.getUser();
@@ -75,7 +77,7 @@ public class RefreshTokenService {
   public void revoke(String rawRefreshToken, Long authenticatedUserId) {
 
     if (authenticatedUserId == null) {
-      throw new IllegalArgumentException("Authenticated user is required.");
+      throw new BusinessException(ErrorCode.UNAUTHORIZED);
     }
 
     String tokenHash = hashToken(rawRefreshToken);
@@ -83,6 +85,7 @@ public class RefreshTokenService {
     RefreshToken storedToken =
         refreshTokenRepository.findByTokenHashForUpdate(tokenHash).orElse(null);
 
+    // 이미 삭제된 토큰의 로그아웃은 정상 처리한다.
     if (storedToken == null) {
       return;
     }
@@ -90,7 +93,11 @@ public class RefreshTokenService {
     Long tokenOwnerId = storedToken.getUser().getId();
 
     if (!tokenOwnerId.equals(authenticatedUserId)) {
-      throw new SecurityException("Refresh token does not belong to the authenticated user.");
+      throw new BusinessException(ErrorCode.TOKEN_OWNER_MISMATCH);
+    }
+
+    if (storedToken.isExpired(nowUtc())) {
+      throw new BusinessException(ErrorCode.EXPIRED_REFRESH_TOKEN);
     }
 
     refreshTokenRepository.delete(storedToken);
@@ -107,7 +114,7 @@ public class RefreshTokenService {
   private String hashToken(String token) {
 
     if (token == null || token.isBlank()) {
-      throw new IllegalArgumentException("Refresh token is required.");
+      throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
 
     try {
@@ -117,8 +124,8 @@ public class RefreshTokenService {
 
       return HexFormat.of().formatHex(hashed);
 
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("SHA-256 is unavailable.", e);
+    } catch (NoSuchAlgorithmException exception) {
+      throw new IllegalStateException("SHA-256 is unavailable.", exception);
     }
   }
 

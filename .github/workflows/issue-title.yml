@@ -4,57 +4,106 @@ name: Add TFS issue prefix
 on:
   issues:
     types: [opened]
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
 
 permissions:
   issues: write
 
 concurrency:
   group: tfs-issue-numbering
+  queue: max
   cancel-in-progress: false
 
 jobs:
   add-prefix:
+    name: Add TFS number to issue title
     runs-on: ubuntu-latest
 
     steps:
-      - name: Add TFS number to issue title
+      - name: Assign missing TFS numbers
         uses: actions/github-script@v8
         with:
           script: |
-            const currentIssue = context.payload.issue;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
 
-            const issues = await github.paginate(
+            // PR은 제외하고 전체 Issue를 조회한다.
+            const allItems = await github.paginate(
               github.rest.issues.listForRepo,
               {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'all',
+                owner,
+                repo,
+                state: "all",
                 per_page: 100,
               }
             );
 
-            const existingNumbers = issues
-              .filter(item =>
-                !item.pull_request &&
-                item.number !== currentIssue.number
-              )
-              .map(item => {
-                const match = item.title.match(/^\[TFS-(\d+)\]/);
-                return match ? Number(match[1]) : 0;
+            const issues = allItems
+              .filter(item => !item.pull_request)
+              .sort((a, b) => a.number - b.number);
+
+            const usedNumbers = new Set();
+
+            for (const issue of issues) {
+              const match = issue.title.match(
+                /^\[TFS-(\d+)\]/
+              );
+
+              if (match) {
+                usedNumbers.add(Number(match[1]));
+              }
+            }
+
+            let nextNumber =
+              Math.max(0, ...usedNumbers) + 1;
+
+
+            for (const item of issues) {
+              const { data: latestIssue } =
+                await github.rest.issues.get({
+                  owner,
+                  repo,
+                  issue_number: item.number,
+                });
+
+
+              const existingPrefix =
+                latestIssue.title.match(
+                  /^\[TFS-(\d+)\]/
+                );
+
+              if (existingPrefix) {
+                core.info(
+                  `Issue #${item.number} already numbered.`
+                );
+                continue;
+              }
+
+              while (usedNumbers.has(nextNumber)) {
+                nextNumber++;
+              }
+
+              const cleanTitle = latestIssue.title
+                .replace(/^\[TFS-\d+\]\s*/, "")
+                .trim();
+
+              const newTitle =
+                `[TFS-${nextNumber}] ${cleanTitle}`;
+
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: item.number,
+                title: newTitle,
               });
 
-            const nextNumber =
-              Math.max(0, ...existingNumbers) + 1;
+              usedNumbers.add(nextNumber);
 
-            const prefix = `[TFS-${nextNumber}]`;
+              core.info(
+                `Issue #${item.number}: ${newTitle}`
+              );
 
-            const cleanTitle = currentIssue.title
-              .replace(/^\[TFS-\d+\]\s*/, '')
-              .trim();
-
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: currentIssue.number,
-              title: `${prefix} ${cleanTitle}`,
-            });
+              nextNumber++;
+            }
