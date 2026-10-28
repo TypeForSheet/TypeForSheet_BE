@@ -76,6 +76,7 @@ public class GlobalExceptionHandler {
     }
 
     return ResponseEntity.status(exception.getStatusCode())
+        .headers(exception.getHeaders())
         .body(new ApiResponse<>(false, "HTTP_ERROR", "요청을 처리할 수 없습니다.", null));
   }
 
@@ -85,6 +86,7 @@ public class GlobalExceptionHandler {
     if (exception instanceof ErrorResponse errorResponse) {
 
       return ResponseEntity.status(errorResponse.getStatusCode())
+          .headers(errorResponse.getHeaders())
           .body(new ApiResponse<>(false, "HTTP_ERROR", "요청을 처리할 수 없습니다.", null));
     }
 
