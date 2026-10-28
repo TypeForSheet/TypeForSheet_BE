@@ -1,0 +1,110 @@
+
+name: Add TFS PR prefix
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  add-prefix:
+    name: Add TFS number to PR title
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update PR title from linked issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+
+            // Closes #6, Closes: #6 등의 형식 지원
+            const issueMatch = body.match(
+              /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s*#(\d+)\b/i
+            );
+
+            if (!issueMatch) {
+              core.info("Linked issue not found.");
+              return;
+            }
+
+            const issueNumber = Number(issueMatch[1]);
+
+            let tfsPrefix = null;
+
+            // Issue 접두사가 아직 발급되지 않았다면
+            // 제한된 횟수만큼 재조회한다.
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              const { data: issue } =
+                await github.rest.issues.get({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                });
+
+              if (issue.pull_request) {
+                core.warning(
+                  "Linked number refers to a PR."
+                );
+                return;
+              }
+
+              const match = issue.title.match(
+                /^\[(TFS-\d+)\]/
+              );
+
+              if (match) {
+                tfsPrefix = match[1];
+                break;
+              }
+
+              if (attempt < 3) {
+                await new Promise(resolve =>
+                  setTimeout(resolve, 2000)
+                );
+              }
+            }
+
+            if (!tfsPrefix) {
+              core.warning(
+                "TFS prefix is not assigned yet."
+              );
+              return;
+            }
+
+            // 가장 최근의 PR 제목을 조회한다.
+            const { data: latestPR } =
+              await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: pr.number,
+              });
+
+            const cleanTitle = latestPR.title
+              .replace(/^\[TFS-\d+\]\s*/, "")
+              .trim();
+
+            const newTitle =
+              `[${tfsPrefix}] ${cleanTitle}`;
+
+            if (latestPR.title === newTitle) {
+              core.info("PR title already correct.");
+              return;
+            }
+
+            await github.rest.pulls.update({
+              owner,
+              repo,
+              pull_number: pr.number,
+              title: newTitle,
+            });
+
+            core.info(`PR title updated: ${newTitle}`);
