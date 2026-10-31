@@ -60,21 +60,22 @@ jobs:
               return;
             }
 
+            // 기존 TFS와 신규 MUBLE Issue 모두 인식
             const issueTitleMatch = issue.title.match(
-              /^\[MUBLE-(\d+)\]\s+\[(FEAT|FIX|HOTFIX|CHORE|DELETE|DOCS|REFACTOR)\]\s+.+$/i
+              /^\[(?:MUBLE|TFS)-(\d+)\]\s+\[(FEAT|FIX|HOTFIX|CHORE|DELETE|DOCS|REFACTOR)\]\s+(.+)$/i
             );
 
             if (!issueTitleMatch) {
               core.setFailed(
-                "Linked Issue must have a MUBLE ticket prefix."
+                "Linked Issue must have a valid TFS or MUBLE prefix."
               );
               return;
             }
 
             const ticketNumber = Number(issueTitleMatch[1]);
             const issueType = issueTitleMatch[2].toUpperCase();
+            const issueSummary = issueTitleMatch[3];
 
-            // 기존 TFS 브랜치도 허용
             const branchMatch = pr.head.ref.match(
               /^(feat|fix|hotfix|chore|delete|docs|refactor)\/(?:MUBLE|TFS)-(\d+)$/
             );
@@ -103,8 +104,9 @@ jobs:
               return;
             }
 
-            // PR 제목을 연결된 Issue 제목과 동일하게 설정
-            const newTitle = issue.title;
+            // PR 제목은 항상 MUBLE 접두사 사용
+            const newTitle =
+              `[MUBLE-${ticketNumber}] [${issueType}] ${issueSummary}`;
 
             if (pr.title === newTitle) {
               core.info("PR title already synchronized.");

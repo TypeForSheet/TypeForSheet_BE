@@ -49,7 +49,7 @@ jobs:
 
             if (!branchMatch) {
               core.setFailed(
-                "Required branch: {type}/MUBLE-{ticket-number}"
+                "Invalid branch name. Required: {type}/MUBLE-{ticket-number}"
               );
               return;
             }
@@ -86,13 +86,14 @@ jobs:
               return;
             }
 
+            // 리브랜딩 전환 중에는 TFS/MUBLE 모두 허용
             const titleMatch = issue.title.match(
-              /^\[MUBLE-(\d+)\]\s+\[(FEAT|FIX|HOTFIX|CHORE|DELETE|DOCS|REFACTOR)\]\s+.+$/i
+              /^\[(?:MUBLE|TFS)-(\d+)\]\s+\[(FEAT|FIX|HOTFIX|CHORE|DELETE|DOCS|REFACTOR)\]\s+.+$/i
             );
 
             if (!titleMatch) {
               core.setFailed(
-                "Linked Issue has no valid MUBLE prefix."
+                "Linked Issue must have a valid TFS or MUBLE prefix."
               );
               return;
             }
@@ -102,8 +103,8 @@ jobs:
 
             if (branchNumber !== ticketNumber) {
               core.setFailed(
-                `Branch MUBLE-${branchNumber} does not match ` +
-                `Issue MUBLE-${ticketNumber}.`
+                `Branch ticket ${branchNumber} does not match ` +
+                `linked Issue ticket ${ticketNumber}.`
               );
               return;
             }
