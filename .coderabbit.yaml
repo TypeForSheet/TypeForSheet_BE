@@ -1,3 +1,4 @@
+
 language: ko-KR
 
 reviews:
@@ -8,6 +9,7 @@ reviews:
   assess_linked_issues: true
   suggested_labels: true
   auto_apply_labels: false
+
   labeling_instructions:
     - label: "💻 Feat"
       instructions: 새로운 기능을 구현하는 변경에 제안합니다.
@@ -23,16 +25,68 @@ reviews:
       instructions: 문서나 주석만 변경하는 경우 제안합니다.
     - label: "♻️ Refactor"
       instructions: 기능 변경 없이 코드 구조를 개선하는 경우 제안합니다.
+
   path_filters:
     - "!build/**"
     - "!**/generated/**"
+
+    # 팀에서 합의한 Issue/PR 템플릿은 리뷰 제외
+    - "!.github/ISSUE_TEMPLATE/**"
+    - "!.github/PULL_REQUEST_TEMPLATE.md"
+    - "!.github/PULL_REQUEST_TEMPLATE/**"
+
   path_instructions:
+    - path: "**/*"
+      instructions: |
+        MUBLE 프로젝트에서 팀이 합의한 협업 규칙과
+        기존 코드 컨벤션을 존중합니다.
+
+        GitHub Issue 및 PR 템플릿은 팀에서 의도적으로
+        설계한 형식이므로 임의의 구조 변경을 제안하지 않습니다.
+
+        PR 본문의 제목, 섹션 순서, 체크리스트 구성,
+        이모지, 마크다운 스타일 등 단순한 형식 차이를
+        코드 품질 문제로 지적하지 않습니다.
+
+        이미 팀에서 합의한 규칙을 일반적인 관행으로
+        변경하도록 권장하지 않습니다.
+
+        실제 버그, 보안 취약점, 기능 누락,
+        예외 처리 오류, 테스트 누락 등
+        실질적인 문제를 우선적으로 검토합니다.
+
+        취향에 따른 리팩터링이나 불필요한
+        스타일 변경 제안은 최소화합니다.
+
     - path: "src/main/java/**/*.java"
       instructions: |
         Controller-Service-Repository 간 책임 분리를 확인합니다.
         입력값 검증, 예외 처리, 트랜잭션 범위를 확인합니다.
         Entity가 API 응답으로 직접 노출되지 않는지 확인합니다.
+
+        인증 및 인가와 관련된 코드에서는
+        JWT 검증, 토큰 만료, 사용자 권한 확인,
+        민감정보 노출 가능성을 중점적으로 검토합니다.
+
+        실제 오류나 보안 위험이 있는 경우에만
+        구체적인 근거와 수정 방향을 제시합니다.
+
     - path: "src/test/**/*.java"
       instructions: |
         핵심 성공 및 실패 시나리오가 검증되는지 확인합니다.
         구현 세부사항보다 외부 동작을 검증하는지 확인합니다.
+
+    - path: ".github/workflows/**"
+      instructions: |
+        GitHub Actions의 실행 조건, 권한 및 오류 처리,
+        기존 협업 규칙과의 호환성을 확인합니다.
+
+        MUBLE 작업 번호는 GitHub Issue/PR 번호와
+        별개로 관리된다는 점을 고려합니다.
+
+        새 Issue 생성 시 작업 번호가 순차 발급되고,
+        PR에는 연결된 Issue의 MUBLE 번호가
+        동일하게 적용되는지 확인합니다.
+
+        팀에서 의도적으로 결정한 Issue/PR
+        템플릿 형식을 변경하도록 요구하지 않습니다.

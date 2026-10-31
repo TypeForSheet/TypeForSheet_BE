@@ -1,6 +1,7 @@
-# TypeForSheet Backend
 
-TypeForSheet의 Spring Boot 기반 REST API 서버입니다.
+# MUBLE Backend
+
+MUBLE의 Spring Boot 기반 REST API 서버입니다.
 
 ## 기술 스택
 
@@ -82,10 +83,12 @@ com.typeforsheet.backend
 
 ## 브랜치 및 PR 규칙
 
-- 브랜치: `{type}/TFS-{github-issue-number}`
-- 예시: `feat/TFS-12`
-- PR 제목: `[FEAT] #12 시트 생성 API 구현`
-- PR 본문에 `Closes #12`를 작성합니다.
+- 브랜치: `{type}/MUBLE-{ticket-number}`
+- 예시: `feat/MUBLE-4`
+- Issue 제목: `[MUBLE-4] [FEAT] 소셜 로그인 구현`
+- PR 제목: 연결된 Issue와 동일
+- PR 본문: `Closes #이슈번호`
+- MUBLE 작업 번호는 GitHub Issue/PR 번호와 별도로 관리합니다.
 - 모든 변경은 PR을 통해 `dev`에 병합합니다.
 - `main`에는 원칙적으로 `dev`만 병합합니다.
 
